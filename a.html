@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caesar Cipher – Mã hóa Dịch Vòng</title>
+  <style>
+    :root{
+      --bg: #0f172a;        /* slate-900 */
+      --card: #111827;      /* gray-900 */
+      --muted: #9ca3af;     /* gray-400 */
+      --txt: #f8fafc;       /* slate-50 */
+      --acc: #38bdf8;       /* sky-400 */
+      --acc2:#22c55e;       /* green-500 */
+      --ring:#7dd3fc;       /* sky-300 */
+      --warn:#f59e0b;       /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; 
+      color:var(--txt); background: radial-gradient(1200px 800px at 20% -10%, #1f2937 0%, #0b1220 40%, #020617 100%), var(--bg);
+      display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .wrap{width:100%; max-width:920px}
+    .title{
+      text-align:center; margin: 0 0 18px; letter-spacing:.3px;
+    }
+    .title h1{font-size: clamp(22px, 3vw, 34px); margin:0 0 6px;}
+    .title p{margin:0; color:var(--muted)}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(148,163,184,.16);
+      border-radius:20px; padding:20px; box-shadow: 0 10px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+    }
+    .grid{ display:grid; grid-template-columns: 1fr; gap:16px }
+    @media (min-width: 860px){
+      .grid{ grid-template-columns: 1fr 360px; }
+    }
+
+    label{ display:block; font-weight:600; margin-bottom:8px; }
+    .hint{ color:var(--muted); font-weight:500; font-size:12px }
+
+    textarea, input[type="number"], select{
+      width:100%;
+      background:#0b1020; color:var(--txt);
+      border:1px solid rgba(148,163,184,.24);
+      border-radius:14px; padding:12px 14px;
+      outline:none; resize: vertical; min-height: 120px;
+    }
+    textarea:focus, input[type="number"]:focus, select:focus{
+      border-color: var(--ring); box-shadow: 0 0 0 4px rgba(125,211,252,.15);
+    }
+    input[type="number"]{ min-height:44px; }
+
+    .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+    .row .grow{ flex:1 }
+
+    .seg{
+      background:#0a0f1e; border:1px solid rgba(148,163,184,.20);
+      border-radius:14px; padding:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap
+    }
+    .seg label{ font-weight:500; margin:0; display:flex; gap:8px; align-items:center }
+
+    .btns{ display:flex; gap:10px; flex-wrap:wrap }
+    button{
+      border:0; cursor:pointer; font-weight:700; letter-spacing:.3px;
+      padding:12px 16px; border-radius:12px; min-width:140px
+    }
+    .primary{ background:linear-gradient(180deg, var(--acc), #0284c7); color:#03111c }
+    .ghost{ background:transparent; color:var(--txt); border:1px solid rgba(148,163,184,.28) }
+    .ghost:hover{ border-color: var(--ring) }
+    .primary:hover{ filter:brightness(1.08) }
+
+    .outbox{ position:relative }
+    .outbox .copy{ position:absolute; top:14px; right:14px }
+    .note{ font-size:12px; color:var(--muted) }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+      border:1px dashed rgba(148,163,184,.35); color:var(--muted); font-size:12px
+    }
+    .ok{ color:#052e1a; background: linear-gradient(180deg, #34d399, #16a34a); border:0 }
+    .warn{ color:#3b2600; background: linear-gradient(180deg, #fbbf24, #f59e0b); border:0 }
+
+    .foot{ margin-top:16px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="title">
+      <h1>Caesar Cipher – Mã hóa Dịch Vòng</h1>
+      <p>Thiết kế tối giản, dùng cho sinh viên học thuật toán mã dịch vòng.</p>
+    </header>
+
+    <section class="card grid" aria-label="Caesar Cipher UI">
+      <!-- LEFT: INPUTS -->
+      <div>
+        <div>
+          <label for="textIn">Nhập văn bản:</label>
+          <textarea id="textIn" placeholder="Ví dụ: Hello World! hoặc tiếng Việt có dấu…"></textarea>
+        </div>
+
+        <div class="row">
+          <div class="grow">
+            <label for="shift">Khóa dịch (số nguyên):</label>
+            <input id="shift" type="number" value="3" step="1" inputmode="numeric" />
+            <div class="hint">Bạn có thể nhập số âm (ví dụ: -2). Hệ thống tự modulo 26.</div>
+          </div>
+        </div>
+
+        <div class="seg" role="group" aria-label="Chế độ xử lý">
+          <label><input type="radio" name="mode" value="encode" checked /> Mã hóa</label>
+          <label><input type="radio" name="mode" value="decode" /> Giải mã</label>
+          <span class="pill" title="Giữ nguyên ký tự không thuộc A-Z">
+            A–Z chỉ, giữ nguyên ký tự khác
+          </span>
+        </div>
+
+        <div class="btns" style="margin-top:12px">
+          <button id="run" class="primary">Thực hiện</button>
+          <button id="clear" class="ghost" title="Xóa tất cả">Xóa</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: OUTPUT -->
+      <div>
+        <label for="textOut">Kết quả:</label>
+        <div class="outbox">
+          <textarea id="textOut" readonly placeholder="Kết quả sẽ xuất hiện ở đây…"></textarea>
+          <button id="copy" class="ghost copy" title="Sao chép kết quả">Sao chép</button>
+        </div>
+        <div class="foot">
+          <span class="pill ok" id="status">Sẵn sàng</span>
+          <span class="note">Tuỳ chọn nâng cao: hỗ trợ tiếng Việt có dấu sẽ được thêm sau.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /* ====== Thuật toán Caesar cơ bản (A-Z, a-z) ====== */
+    function normalizeShift(n){
+      // Đưa về [0..25]
+      n = Number(n) || 0;
+      n %= 26; if (n < 0) n += 26; return n;
+    }
+    function caesarTransform(text, shift){
+      const s = normalizeShift(shift);
+      let out = "";
+      for (const ch of text){
+        const code = ch.charCodeAt(0);
+        // A-Z
+        if (code >= 65 && code <= 90){
+          const base = 65; const off = code - base; const enc = (off + s) % 26; out += String.fromCharCode(base + enc);
+        }
+        // a-z
+        else if (code >= 97 && code <= 122){
+          const base = 97; const off = code - base; const enc = (off + s) % 26; out += String.fromCharCode(base + enc);
+        }
+        else {
+          // Giữ nguyên ký tự không thuộc A-Z
+          out += ch;
+        }
+      }
+      return out;
+    }
+    function encode(text, shift){ return caesarTransform(text, shift); }
+    function decode(text, shift){ return caesarTransform(text, -shift); }
+
+    /* ====== UI Logic ====== */
+    const $ = (q) => document.querySelector(q);
+    const textIn = $('#textIn');
+    const textOut = $('#textOut');
+    const shiftEl = $('#shift');
+    const statusEl = $('#status');
+    const runBtn = $('#run');
+    const copyBtn = $('#copy');
+    const clearBtn = $('#clear');
+
+    function setStatus(msg, kind="ok"){ statusEl.textContent = msg; statusEl.className = 'pill ' + (kind==='warn'?'warn':'ok'); }
+
+    runBtn.addEventListener('click', () => {
+      const text = textIn.value ?? '';
+      const shift = parseInt(shiftEl.value, 10) || 0;
+      const mode = document.querySelector('input[name="mode"]:checked')?.value || 'encode';
+      let out = '';
+      try{
+        out = (mode === 'encode') ? encode(text, shift) : decode(text, shift);
+        textOut.value = out;
+        setStatus(`Đã ${mode==='encode'?'mã hóa':'giải mã'} (shift=${normalizeShift(mode==='encode'?shift:-shift)})`);
+      }catch(e){
+        console.error(e); setStatus('Có lỗi xảy ra', 'warn');
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(textOut.value || '');
+        copyBtn.textContent = 'Đã sao chép';
+        setTimeout(()=> copyBtn.textContent = 'Sao chép', 1200);
+      }catch{ /* ignore */ }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      textIn.value = ''; textOut.value = ''; shiftEl.value = 3; setStatus('Đã đặt lại');
+    });
+
+    // Demo mẫu nhỏ cho sinh viên
+    document.addEventListener('DOMContentLoaded', () => {
+      textIn.value = 'Hello, Caesar! Xin chào thế giới.';
+      shiftEl.value = 3;
+    });
+  </script>
+</body>
+</html>
